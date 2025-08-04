@@ -2,13 +2,18 @@ use std::collections::HashMap;
 use log::{info, LevelFilter};
 use simple_logger::SimpleLogger;
 
+/// Represents a constraint in the CHR system.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 enum Constraint {
+    /// The GCD constraint, representing gcd(n).
     Gcd(i32),
 }
 
+/// The constraint store, which holds all the active constraints.
 struct ConstraintStore {
+    /// The constraints are stored in a HashMap, mapping a unique ID to each constraint.
     constraints: HashMap<usize, Constraint>,
+    /// The next available ID for a new constraint.
     next_id: usize,
 }
 
@@ -42,13 +47,15 @@ impl ConstraintStore {
     }
 }
 
-// A trait for all CHR rules
+/// A trait for all CHR rules.
 trait Rule {
-    // apply takes the store and returns true if the store was modified
+    /// Applies the rule to the given constraint store.
+    /// Returns `true` if the store was modified, `false` otherwise.
     fn apply(&self, store: &mut ConstraintStore) -> bool;
 }
 
-// Rule 1: cleanup @ gcd(0) <=> true
+/// The `cleanup @ gcd(0) <=> true` rule.
+/// This is a simplification rule that removes any `gcd(0)` constraint.
 struct GcdCleanupRule;
 
 impl Rule for GcdCleanupRule {
@@ -71,7 +78,9 @@ impl Rule for GcdCleanupRule {
     }
 }
 
-// Rule 2: gcd(N) \ gcd(M) <=> 0 < N, N <= M | gcd(M % N)
+/// The `gcd(N) \ gcd(M) <=> 0 < N, N <= M | gcd(M % N)` rule.
+/// This is a simpagation rule that, given two constraints `gcd(N)` and `gcd(M)`,
+/// if the guard `0 < N, N <= M` holds, it removes `gcd(M)` and adds `gcd(M % N)`.
 struct GcdSimpagationRule;
 
 impl Rule for GcdSimpagationRule {
@@ -109,12 +118,16 @@ impl Rule for GcdSimpagationRule {
 }
 
 
+/// The CHR engine, which manages the rules and the constraint store.
 struct CHREngine<'a> {
+    /// The rules to be applied.
     rules: Vec<Box<dyn Rule + 'a>>,
+    /// The constraint store.
     store: ConstraintStore,
 }
 
 impl<'a> CHREngine<'a> {
+    /// Creates a new CHR engine.
     fn new() -> Self {
         CHREngine {
             rules: Vec::new(),
@@ -122,14 +135,18 @@ impl<'a> CHREngine<'a> {
         }
     }
 
+    /// Adds a rule to the engine.
     fn add_rule(&mut self, rule: Box<dyn Rule + 'a>) {
         self.rules.push(rule);
     }
 
+    /// Adds a constraint to the engine's store.
     fn add_constraint(&mut self, constraint: Constraint) {
         self.store.add_constraint(constraint);
     }
 
+    /// Runs the CHR engine.
+    /// It repeatedly applies the rules to the constraint store until no more rules can be applied.
     fn run(&mut self) {
         let mut changed = true;
         while changed {
@@ -143,25 +160,33 @@ impl<'a> CHREngine<'a> {
         }
     }
 
+    /// Returns a vector of the constraints in the store.
     fn get_constraints(&self) -> Vec<&Constraint> {
         self.store.get_constraints()
     }
 }
 
 fn main() {
+    // Initialize the logger to see the execution trace.
     SimpleLogger::new().with_level(LevelFilter::Info).init().unwrap();
+
+    // Create a new CHR engine.
     let mut engine = CHREngine::new();
 
+    // Add the GCD rules to the engine.
     engine.add_rule(Box::new(GcdCleanupRule));
     engine.add_rule(Box::new(GcdSimpagationRule));
 
+    // Add the initial constraints to the engine.
     engine.add_constraint(Constraint::Gcd(12));
     engine.add_constraint(Constraint::Gcd(8));
 
     info!("Initial constraints: {:?}", engine.get_constraints());
 
+    // Run the engine to solve the constraints.
     engine.run();
 
+    // Print the final constraints.
     info!("Final constraints: {:?}", engine.get_constraints());
     println!("Final constraints: {:?}", engine.get_constraints());
 }
