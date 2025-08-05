@@ -6,3 +6,13 @@ edition = "2024"
 [dependencies]
 log = "0.4"
 simple_logger = "1.13"
+pest = "2.1"
+pest_derive = "2.1"
+
+[[bin]]
+name = "gcd_solver"
+path = "src/main.rs"
+
+[[bin]]
+name = "generic_solver"
+path = "src/generic_main.rs"

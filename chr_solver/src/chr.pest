@@ -1,0 +1,24 @@
+WHITESPACE = _{ " " | "\t" | "\n" | "\r" }
+
+identifier = @{ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_")* }
+string_literal = @{ "'" ~ (!"'" ~ ANY)* ~ "'" }
+number_literal = @{ "-"? ~ ASCII_DIGIT+ }
+value = { string_literal | number_literal | identifier }
+
+constraint = { identifier ~ "(" ~ (value ~ ("," ~ value)*)? ~ ")" }
+constraints = { constraint ~ ("," ~ constraint)* }
+
+guard = { (value ~ ("<=" | ">=" | "==" | "!=" | "<" | ">") ~ value) ~ ("," ~ (value ~ ("<=" | ">=" | "==" | "!=" | "<" | ">") ~ value))* }
+
+rule_name = { identifier }
+head = { constraints }
+kept_head = { constraints }
+removed_head = { constraints }
+body = { constraints | "true" }
+
+simplification_rule = { rule_name? ~ "@"? ~ head ~ "<=>" ~ guard? ~ "|" ~ body }
+propagation_rule = { rule_name? ~ "@"? ~ head ~ "==>" ~ guard? ~ "|" ~ body }
+simpagation_rule = { rule_name? ~ "@"? ~ kept_head ~ "\\" ~ removed_head ~ "<=>" ~ guard? ~ "|" ~ body }
+
+rule = { simplification_rule | propagation_rule | simpagation_rule }
+rules = { SOI ~ (rule ~ (NEWLINE | EOI))* ~ EOI }
